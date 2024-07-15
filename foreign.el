@@ -34,19 +34,18 @@
   :group 'foreign)
 
 (setq foreign--answers nil)
-(setq foreign--check-box "[ ]")
-(setq foreign--check-box-checked "[X]")
+(setq foreign--check-box "⭕")
+(setq foreign--check-box-checked "✅")
 
 (defcustom foreign-text-increasing 2
-  "After open new buffer increase text on this value"
+  "After open new buffer increase text on this value."
   :group 'foreign
   :type 'number)
 
 (defun foreign--content-to-touples (content)
   (thread-last
     (split-string content "\n")
-    (-map (lambda (row) (split-string row "-")))))
-
+    (-map (lambda (row) (-map 's-trim (split-string row "-"))))))
 
 (defun foreign--start-learning (header)
   (let ((content (foreign--copy-all-content))
@@ -59,7 +58,7 @@
     (thread-last
       foreign--answers
       (-map 'car)
-      (-map (lambda (row) (concat foreign--check-box " " row "- \n")))
+      (-map (lambda (row) (concat foreign--check-box " " row " - \n")))
       (-sort 'string<)
       (string-join)
       (insert))
@@ -70,10 +69,10 @@
     foreign--answers
     (-find (lambda (coll)
              (cl-destructuring-bind (key_ answer) coll
-               (s-contains? key key_ t))))
+               (s-equals? key key_))))
     (-last 'identity)))
 
-(defun foreign--answer-is-not-right? (answer)
+(defun foreign--answer-is-wrong (answer)
   (cl-destructuring-bind (key-checked answer) (split-string answer "-")
     (let ((key (s-trim (substring key-checked (length foreign--check-box))))
           (right-answer))
@@ -96,7 +95,7 @@
     (buffer-substring-no-properties start end)))
 
 (defun foreign--check-line ()
-  (let ((right-answer (foreign--answer-is-not-right? (foreign--current-line))))
+  (let ((right-answer (foreign--answer-is-wrong (foreign--current-line))))
     (if (not right-answer)
         (progn
           (beginning-of-line)
