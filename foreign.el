@@ -9,14 +9,14 @@
 (defun foreign--current-line-is-heading? ()
   (save-excursion
     (let ((start)
-        (end)
-        (line))
-    (beginning-of-line)
-    (setq start (point))
-    (end-of-line)
-    (setq end (point))
-    (setq line (buffer-substring-no-properties start end))
-    (string-match-p "*" line))))
+          (end)
+          (line))
+      (beginning-of-line)
+      (setq start (point))
+      (end-of-line)
+      (setq end (point))
+      (setq line (buffer-substring-no-properties start end))
+      (string-match-p "*" line))))
 
 (defun foreign--copy-all-content ()
   (save-excursion
