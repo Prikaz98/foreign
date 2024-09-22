@@ -43,6 +43,7 @@
   :type 'number)
 
 (defun foreign--content-to-touples (content)
+  "CONTENT of org entity."
   (thread-last
     (split-string content "\n")
     (-map (lambda (row) (-map 's-trim (split-string row "-"))))))

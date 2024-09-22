@@ -6,5 +6,8 @@ Simple vocabulary trainer app for Emacs.
 Store learning vocabulary in org file. Separate context by org headings and start learning call ~foreign-start-learning~. When you are finished your translation call ~foreign-check-answers~ to get a result and that it.
 * Demo
 [[file:foreign-demo.gif]]
-* Check list
+* Check list [0/4]
 - [ ] Remove list markers correctly
+- [ ] Create special mode
+- [ ] User shouldn't be able to change words which they're learning (in session)
+- [ ] Collect statistic (Optional)
