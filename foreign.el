@@ -4,7 +4,11 @@
 ;;; functions/foreign.el -*- lexical-binding: t; -*-
 ;;;
 ;;; Code:
+(require 'cc-defs)
+(require 'dash)
+(require 'foreign-mode)
 (require 'org)
+(require 's)
 
 (defun foreign--current-line-is-heading? ()
   (save-excursion
@@ -33,14 +37,9 @@
   "Options for foreign."
   :group 'foreign)
 
-(setq foreign--answers nil)
-(setq foreign--check-box "⭕")
-(setq foreign--check-box-checked "✅")
-
-(defcustom foreign-text-increasing 2
-  "After open new buffer increase text on this value."
-  :group 'foreign
-  :type 'number)
+(defvar foreign--answers nil)
+(defconst foreign--check-box "[ ]")
+(defconst foreign--check-box-checked "[X]")
 
 (defun foreign--content-to-touples (content)
   "CONTENT of org entity."
@@ -54,8 +53,6 @@
         (time (format-time-string "%Y-%m-%d %H-%M" (current-time))))
     (setq foreign--answers (foreign--content-to-touples content))
     (switch-to-buffer (concat "foreign-learning *" header "* *" time "*"))
-    (display-line-numbers-mode)
-    (text-scale-increase foreign-text-increasing)
     (thread-last
       foreign--answers
       (-map 'car)
@@ -63,7 +60,9 @@
       (-sort 'string<)
       (string-join)
       (insert))
-    (goto-char (point-min))))
+    (goto-char (point-min))
+    (end-of-line)
+    (foreign-mode)))
 
 (defun foreign--find-answer-by-key (key)
   (thread-last
@@ -112,7 +111,7 @@
 
 Prints result and toggle checkboxs of answers."
   (interactive)
-  (when (not (s-contains-p "Statistic" (buffer-string)))
+  (when (and (eq major-mode #'foreign-mode) (not (s-contains-p "Statistic" (buffer-string))))
     (save-excursion
       (goto-char (point-min))
       (let ((right-count 0)
