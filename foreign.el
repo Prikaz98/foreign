@@ -10,17 +10,29 @@
 (require 'org)
 (require 's)
 
+(defun foreign--current-line ()
+  (let ((start)
+        (end))
+    (beginning-of-line)
+    (setq start (point))
+    (end-of-line)
+    (setq end (point))
+    (buffer-substring-no-properties start end)))
+
 (defun foreign--current-line-is-heading? ()
   (save-excursion
-    (let ((start)
-          (end)
-          (line))
-      (beginning-of-line)
-      (setq start (point))
-      (end-of-line)
-      (setq end (point))
-      (setq line (buffer-substring-no-properties start end))
-      (string-match-p "*" line))))
+    (let ((line (foreign--current-line)))
+      (or
+       (string-match-p "^*+\s+\\w+.+$" line)
+       (string-match-p "^\\(\s+\\)?[-+] .+$" line)))))
+
+(defun foreign--normalize-line (str)
+  (let ((remove-from-string
+         (lambda (rgx target)
+           (replace-regexp-in-string rgx "" target))))
+    (thread-last
+      str
+      (funcall remove-from-string "^\s?+[-+*]\s+"))))
 
 (defun foreign--copy-all-content ()
   (save-excursion
@@ -29,7 +41,7 @@
       (forward-line)
       (while (ignore-errors
                (setq line (foreign--current-line))
-               (setq content (cons (s-trim (substring line 2 (length line))) content))
+               (setq content (cons (foreign--normalize-line line) content))
                (org-next-item)))
       (string-join content "\n"))))
 
@@ -47,6 +59,17 @@
     (split-string content "\n")
     (-map (lambda (row) (-map 's-trim (split-string row "-"))))))
 
+(defun foreign--shuffle (coll)
+  "Shuffle COLL."
+  (let ((acc)
+        (rest (vconcat coll))
+        (roll))
+    (dotimes (_ (length rest))
+      (setq roll (random (length rest)))
+      (setq acc (cons (elt rest roll) acc))
+      (setq rest (vconcat (seq-take rest roll) (seq-drop rest (1+ roll)))))
+    acc))
+
 (defun foreign--start-learning (header)
   (let ((content (foreign--copy-all-content))
         (prepared-content)
@@ -57,7 +80,7 @@
       foreign--answers
       (-map 'car)
       (-map (lambda (row) (concat foreign--check-box " " row " - \n")))
-      (-sort 'string<)
+      (foreign--shuffle)
       (string-join)
       (insert))
     (goto-char (point-min))
@@ -85,14 +108,6 @@
             right-answer)
         (message (concat "Couldn't find " key))))))
 
-(defun foreign--current-line ()
-  (let ((start)
-        (end))
-    (beginning-of-line)
-    (setq start (point))
-    (end-of-line)
-    (setq end (point))
-    (buffer-substring-no-properties start end)))
 
 (defun foreign--check-line ()
   (let ((right-answer (foreign--answer-is-wrong (foreign--current-line))))
