@@ -11,6 +11,7 @@
 (require 's)
 
 (defun foreign--current-line ()
+  "Return current line."
   (let ((start)
         (end))
     (beginning-of-line)
@@ -20,6 +21,7 @@
     (buffer-substring-no-properties start end)))
 
 (defun foreign--current-line-is-heading? ()
+  "Does the current line is heading?"
   (save-excursion
     (let ((line (foreign--current-line)))
       (or
@@ -27,6 +29,9 @@
        (string-match-p "^\\(\s+\\)?[-+] .+$" line)))))
 
 (defun foreign--normalize-line (str)
+  "Remove extra symbols of the beginning of the line.
+
+STR - string which will be normalized"
   (let ((remove-from-string
          (lambda (rgx target)
            (replace-regexp-in-string rgx "" target))))
@@ -35,6 +40,9 @@
       (funcall remove-from-string "^\s?+[-+*]\s+"))))
 
 (defun foreign--copy-all-content ()
+  "Select all content under the current heading at point.
+
+Select only org-list-items"
   (save-excursion
     (let ((content nil)
           (line))
@@ -71,6 +79,7 @@
     acc))
 
 (defun foreign--start-learning (header)
+  "Create learning session by current HEADING."
   (let ((content (foreign--copy-all-content))
         (prepared-content)
         (time (format-time-string "%Y-%m-%d %H-%M" (current-time))))
@@ -88,6 +97,7 @@
     (foreign-mode)))
 
 (defun foreign--find-answer-by-key (key)
+  "Look for an answer by KEY and return it."
   (thread-last
     foreign--answers
     (-find (lambda (coll)
@@ -96,6 +106,7 @@
     (-last 'identity)))
 
 (defun foreign--answer-is-wrong (answer)
+  "Check answer on correct by ANSWER."
   (cl-destructuring-bind (key-checked answer) (split-string answer "-")
     (let ((key (s-trim (substring key-checked (length foreign--check-box))))
           (right-answer))
@@ -108,8 +119,8 @@
             right-answer)
         (message (concat "Couldn't find " key))))))
 
-
 (defun foreign--check-line ()
+  "Check current line of correction."
   (let ((right-answer (foreign--answer-is-wrong (foreign--current-line))))
     (if (not right-answer)
         (progn
