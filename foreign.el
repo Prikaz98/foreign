@@ -137,7 +137,7 @@ Select only org-list-items"
 
 (defun foreign--put-last-statistics (all right wrong)
   "Store ALL, RIGHT and WRONG result."
-  (when (and foreign--position (s-equals? "y" (read-string "Do you like exit session?y/n ")))
+  (when (and foreign--position (s-equals? "y" (read-string "Would you like to leave session?y/n ")))
     (save-excursion
       (switch-to-buffer (plist-get foreign--position :buffer-name))
       (goto-char (plist-get foreign--position :place))
