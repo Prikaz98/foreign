@@ -58,6 +58,7 @@ Select only org-list-items"
   :group 'foreign)
 
 (defvar foreign--answers nil)
+(defvar foreign--position nil)
 (defconst foreign--check-box "[ ]")
 (defconst foreign--check-box-checked "[X]")
 
@@ -79,10 +80,12 @@ Select only org-list-items"
     acc))
 
 (defun foreign--start-learning (header)
-  "Create learning session by current HEADING."
-  (let ((content (foreign--copy-all-content))
+  "Create learning session by current HEADER."
+  (let ((current-point (point))
+        (content (foreign--copy-all-content))
         (prepared-content)
         (time (format-time-string "%Y-%m-%d %H-%M" (current-time))))
+    (setq foreign--position (list :place current-point :buffer-name (buffer-name)))
     (setq foreign--answers (foreign--content-to-touples content))
     (switch-to-buffer (concat "foreign-learning *" header "* *" time "*"))
     (thread-last
@@ -132,16 +135,37 @@ Select only org-list-items"
         (end-of-line)
         (insert (concat " (" (s-trim right-answer) ")"))))))
 
+(defun foreign--put-last-statistics (all right wrong)
+  "Store ALL, RIGHT and WRONG result."
+  (when (and foreign--position (s-equals? "y" (read-string "Do you like exit session?y/n ")))
+    (save-excursion
+      (switch-to-buffer (plist-get foreign--position :buffer-name))
+      (goto-char (plist-get foreign--position :place))
+      (let ((line (foreign--current-line))
+            (new-line))
+        (when (string-match-p "^*+\s+\\w+.+$" line) ;;is org heading like * Org
+          (setq new-line (replace-regexp-in-string "\s+\\[[0-9]+/[0-9]+/[0-9]+]" "" line))
+          (beginning-of-line)
+          (kill-line)
+          (insert (concat new-line
+                          " ["
+                          (number-to-string all)
+                          "/"
+                          (number-to-string right)
+                          "/"
+                          (number-to-string wrong)
+                          "]")))))))
+
 (defun foreign-check-answers ()
   "Finish learnin session.
 
 Prints result and toggle checkboxs of answers."
   (interactive)
   (when (and (eq major-mode #'foreign-mode) (not (s-contains-p "Statistic" (buffer-string))))
-    (save-excursion
-      (goto-char (point-min))
-      (let ((right-count 0)
-            (all-count 0))
+    (let ((right-count 0)
+          (all-count 0))
+      (save-excursion
+        (goto-char (point-min))
         (while (s-contains? foreign--check-box (foreign--current-line))
           (setq all-count (+ all-count 1))
           (setq right-count (+ right-count (if (foreign--check-line) 1 0)))
@@ -152,7 +176,8 @@ Prints result and toggle checkboxs of answers."
                   (concat "\nStatistic right:"
                           (number-to-string right-count)
                           " wrong:"
-                          (number-to-string (- all-count right-count)))))))))
+                          (number-to-string (- all-count right-count))))))
+      (foreign--put-last-statistics all-count right-count (- all-count right-count)))))
 
 (defun foreign-start-learning ()
   "Start learning session.
