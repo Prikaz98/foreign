@@ -8,7 +8,16 @@
 (require 'dash)
 (require 'foreign-mode)
 (require 'org)
-(require 's)
+
+(defun string-contains? (str1 str2 &optional ignore-case)
+  "Search STR2 in STR1."
+  (with-temp-buffer
+    (insert str1)
+    (goto-char (point-min))
+    (let ((case-fold-search ignore-case))
+      (ignore-error 'search-failed
+	(search-forward str2)
+	t))))
 
 (defun foreign--current-line ()
   "Return current line."
@@ -66,7 +75,7 @@ Select only org-list-items"
   "CONTENT of org entity."
   (thread-last
     (split-string content "\n")
-    (-map (lambda (row) (-map 's-trim (split-string row "-"))))))
+    (-map (lambda (row) (-map 'string-trim (split-string row "-"))))))
 
 (defun foreign--shuffle (coll)
   "Shuffle COLL."
@@ -105,19 +114,19 @@ Select only org-list-items"
     foreign--answers
     (-find (lambda (coll)
              (cl-destructuring-bind (key_ answer) coll
-               (s-equals? key key_))))
+               (string= key key_))))
     (-last 'identity)))
 
 (defun foreign--answer-is-wrong (answer)
   "Check answer on correct by ANSWER."
   (cl-destructuring-bind (key-checked answer) (split-string answer "-")
-    (let ((key (s-trim (substring key-checked (length foreign--check-box))))
+    (let ((key (string-trim (substring key-checked (length foreign--check-box))))
           (right-answer))
       (setq right-answer (foreign--find-answer-by-key key))
       (if right-answer
           (if (and answer
-                   (not (string-empty-p (s-trim answer)))
-                   (s-contains? (s-trim answer) (s-trim right-answer) t))
+                   (not (string-empty-p (string-trim answer)))
+                   (string-contains? (string-trim answer) (string-trim right-answer) t))
               nil
             right-answer)
         (message (concat "Couldn't find " key))))))
@@ -133,11 +142,11 @@ Select only org-list-items"
           t)
       (progn
         (end-of-line)
-        (insert (concat " (" (s-trim right-answer) ")"))))))
+        (insert (concat " (" (string-trim right-answer) ")"))))))
 
 (defun foreign--put-last-statistics (all right wrong)
   "Store ALL, RIGHT and WRONG result."
-  (when (and foreign--position (s-equals? "y" (read-string "Would you like to leave session?y/n ")))
+  (when (and foreign--position (string= "y" (read-string "Would you like to leave session?y/n ")))
     (save-excursion
       (switch-to-buffer (plist-get foreign--position :buffer-name))
       (goto-char (plist-get foreign--position :place))
@@ -161,12 +170,12 @@ Select only org-list-items"
 
 Prints result and toggle checkboxs of answers."
   (interactive)
-  (when (and (eq major-mode #'foreign-mode) (not (s-contains-p "Statistic" (buffer-string))))
+  (when (and (eq major-mode #'foreign-mode) (not (string-contains? (buffer-string) "Statistic")))
     (let ((right-count 0)
           (all-count 0))
       (save-excursion
         (goto-char (point-min))
-        (while (s-contains? foreign--check-box (foreign--current-line))
+        (while (string-contains? (foreign--current-line) foreign--check-box)
           (setq all-count (+ all-count 1))
           (setq right-count (+ right-count (if (foreign--check-line) 1 0)))
           (forward-line))
