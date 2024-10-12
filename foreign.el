@@ -9,7 +9,7 @@
 (require 'foreign-mode)
 (require 'org)
 
-(defun string-contains? (str1 str2 &optional ignore-case)
+(defun foreign--string-contains? (str1 str2 &optional ignore-case)
   "Search STR2 in STR1."
   (with-temp-buffer
     (insert str1)
@@ -126,7 +126,7 @@ Select only org-list-items"
       (if right-answer
           (if (and answer
                    (not (string-empty-p (string-trim answer)))
-                   (string-contains? (string-trim answer) (string-trim right-answer) t))
+                   (foreign--string-contains? (string-trim answer) (string-trim right-answer) t))
               nil
             right-answer)
         (message (concat "Couldn't find " key))))))
@@ -170,12 +170,12 @@ Select only org-list-items"
 
 Prints result and toggle checkboxs of answers."
   (interactive)
-  (when (and (eq major-mode #'foreign-mode) (not (string-contains? (buffer-string) "Statistic")))
+  (when (and (eq major-mode #'foreign-mode) (not (foreign--string-contains? (buffer-string) "Statistic")))
     (let ((right-count 0)
           (all-count 0))
       (save-excursion
         (goto-char (point-min))
-        (while (string-contains? (foreign--current-line) foreign--check-box)
+        (while (foreign--string-contains? (foreign--current-line) foreign--check-box)
           (setq all-count (+ all-count 1))
           (setq right-count (+ right-count (if (foreign--check-line) 1 0)))
           (forward-line))
