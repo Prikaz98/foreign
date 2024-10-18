@@ -10,6 +10,17 @@
 (require 'org)
 (require 'rect)
 
+
+(defgroup foreign nil
+  "Options for foreign."
+  :group 'foreign)
+
+(defvar foreign--answers nil)
+(defvar foreign--position nil)
+(defconst foreign--check-box "[ ]")
+(defconst foreign--check-box-checked "[X]")
+(defconst foreign-entity-tag "foreign")
+
 (defun foreign--string-contains? (str1 str2 &optional ignore-case)
   "Search STR2 in STR1."
   (with-temp-buffer
@@ -35,8 +46,7 @@
   (save-excursion
     (let ((line (foreign--current-line)))
       (or
-       (string-match-p "^*+\s+\\w+.+$" line)
-       (string-match-p "^\\(\s+\\)?[-+] .+$" line)))))
+       (string-match-p (concat "^*+.+" foreign-entity-tag) line)))))
 
 (defun foreign--normalize-line (str)
   "Remove extra symbols of the beginning of the line.
@@ -62,15 +72,6 @@ Select only org-list-items"
                (setq content (cons (foreign--normalize-line line) content))
                (org-next-item)))
       (string-join content "\n"))))
-
-(defgroup foreign nil
-  "Options for foreign."
-  :group 'foreign)
-
-(defvar foreign--answers nil)
-(defvar foreign--position nil)
-(defconst foreign--check-box "[ ]")
-(defconst foreign--check-box-checked "[X]")
 
 (defun foreign--content-to-touples (content swap?)
   "CONTENT of org entity.
@@ -156,6 +157,11 @@ MAX-LINE need to indent RIGHT-ANSWER"
         (end-of-line)
         (insert (concat padding "(" (string-trim right-answer) ")"))))))
 
+(defun foreign-put-tag ()
+  "Put sign that means it is a foreign entity."
+  (interactive)
+  (org-set-tags foreign-entity-tag))
+
 (defun foreign--put-last-statistics (all right wrong)
   "Store ALL, RIGHT and WRONG result."
   (when (and foreign--position (string= "y" (read-string "Would you like to leave session?y/n ")))
@@ -166,19 +172,21 @@ MAX-LINE need to indent RIGHT-ANSWER"
                      (beginning-of-line)
                      (point)))
              (end (progn
-                     (re-search-forward "[[0-9]+/[0-9]+/[0-9]+]")
-                     (point)))
+                     (re-search-forward foreign-entity-tag)
+                     (- (point) (length foreign-entity-tag) 2)))
              (line (buffer-substring-no-properties start end))
              (new-line))
+        (print line)
         (when (string-match-p "^*+\s+\\w+.+$" line) ;;is org heading like * Org
-          (setq new-line (replace-regexp-in-string "\s+\\[[0-9]+/[0-9]+/[0-9]+]" "" line))
+          (setq new-line (replace-regexp-in-string "\s+\\[[0-9]+/.[0-9]+/.[0-9]+]" "" line))
           (kill-region start end)
+          (beginning-of-line)
           (insert (concat new-line
                           " ["
                           (number-to-string all)
-                          "/"
+                          "/+"
                           (number-to-string right)
-                          "/"
+                          "/-"
                           (number-to-string wrong)
                           "]")))))))
 
