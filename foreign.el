@@ -1,13 +1,14 @@
 ;;; package --- Summary
 ;;; Commentary:
-;;;   some functions which help me edit text well
+;;;   Application to learn new vocabulary in foreign language.
 ;;; functions/foreign.el -*- lexical-binding: t; -*-
-;;;
+;;; Require: Emacs version >= 29.3
 ;;; Code:
 (require 'cc-defs)
 (require 'dash)
 (require 'foreign-mode)
 (require 'org)
+(require 'rect)
 
 (defun foreign--string-contains? (str1 str2 &optional ignore-case)
   "Search STR2 in STR1."
@@ -16,8 +17,8 @@
     (goto-char (point-min))
     (let ((case-fold-search ignore-case))
       (ignore-error 'search-failed
-	(search-forward str2)
-	t))))
+        (search-forward str2)
+        t))))
 
 (defun foreign--current-line ()
   "Return current line."
@@ -71,11 +72,14 @@ Select only org-list-items"
 (defconst foreign--check-box "[ ]")
 (defconst foreign--check-box-checked "[X]")
 
-(defun foreign--content-to-touples (content)
+(defun foreign--content-to-touples (content swap?)
   "CONTENT of org entity."
   (thread-last
     (split-string content "\n")
-    (-map (lambda (row) (-map 'string-trim (split-string row "-"))))))
+    (-map (lambda (row) (-map 'string-trim (split-string row "-"))))
+    (-map (lambda (pair)
+            (when swap?
+              (list (cadr pair) (car pair)))))))
 
 (defun foreign--shuffle (coll)
   "Shuffle COLL."
@@ -88,14 +92,14 @@ Select only org-list-items"
       (setq rest (vconcat (seq-take rest roll) (seq-drop rest (1+ roll)))))
     acc))
 
-(defun foreign--start-learning (header)
+(defun foreign--start-learning (header swap?)
   "Create learning session by current HEADER."
   (let ((current-point (point))
         (content (foreign--copy-all-content))
         (prepared-content)
         (time (format-time-string "%Y-%m-%d %H-%M" (current-time))))
     (setq foreign--position (list :place current-point :buffer-name (buffer-name)))
-    (setq foreign--answers (foreign--content-to-touples content))
+    (setq foreign--answers (foreign--content-to-touples content swap?))
     (switch-to-buffer (concat "foreign-learning *" header "* *" time "*"))
     (thread-last
       foreign--answers
@@ -131,9 +135,14 @@ Select only org-list-items"
             right-answer)
         (message (concat "Couldn't find " key))))))
 
-(defun foreign--check-line ()
-  "Check current line of correction."
-  (let ((right-answer (foreign--answer-is-wrong (foreign--current-line))))
+(defun foreign--check-line (max-line)
+  "Check current line of correction.
+
+MAX-LINE need to indent RIGHT-ANSWER"
+  (let* ((curr-line (foreign--current-line))
+         (curr-line-size (length curr-line))
+         (right-answer (foreign--answer-is-wrong curr-line))
+         (padding (spaces-string (+ 2 max-line (* -1 curr-line-size)))))
     (if (not right-answer)
         (progn
           (beginning-of-line)
@@ -142,7 +151,7 @@ Select only org-list-items"
           t)
       (progn
         (end-of-line)
-        (insert (concat " (" (string-trim right-answer) ")"))))))
+        (insert (concat padding "(" (string-trim right-answer) ")"))))))
 
 (defun foreign--put-last-statistics (all right wrong)
   "Store ALL, RIGHT and WRONG result."
@@ -165,19 +174,31 @@ Select only org-list-items"
                           (number-to-string wrong)
                           "]")))))))
 
-(defun foreign-check-answers ()
-  "Finish learnin session.
+(defun foreign--max-line-size ()
+  "Return max line size in the buffer."
+  (let ((max-size 0)
+        (next-size))
+    (goto-char (point-min))
+    (while (not (eobp))
+     (setq next-size (length (foreign--current-line)))
+     (when (> next-size max-size) (setq max-size next-size))
+     (forward-line))
+    max-size))
 
-Prints result and toggle checkboxs of answers."
+(defun foreign-check-answers ()
+  "Finish learning session.
+
+Prints result and toggle checkbox of answers."
   (interactive)
   (when (and (eq major-mode #'foreign-mode) (not (foreign--string-contains? (buffer-string) "Statistic")))
     (let ((right-count 0)
-          (all-count 0))
+          (all-count 0)
+          (max-line (foreign--max-line-size)))
       (save-excursion
         (goto-char (point-min))
         (while (foreign--string-contains? (foreign--current-line) foreign--check-box)
           (setq all-count (+ all-count 1))
-          (setq right-count (+ right-count (if (foreign--check-line) 1 0)))
+          (setq right-count (+ right-count (if (foreign--check-line max-line) 1 0)))
           (forward-line))
         (end-of-line)
         (insert (if (= all-count right-count)
@@ -188,15 +209,17 @@ Prints result and toggle checkboxs of answers."
                           (number-to-string (- all-count right-count))))))
       (foreign--put-last-statistics all-count right-count (- all-count right-count)))))
 
-(defun foreign-start-learning ()
+(defun foreign-start-learning (&optional swap)
   "Start learning session.
 
-Copys all heading content. Expected content rows of `'word - translation`'.
+Copy all heading content. Expected content rows of `'word - translation`'.
 When you wrote all translations you can call `'foreign-check-answers`'
-to get a result of training"
+to get a result of training.
+SWAP - boolean value signs of swapping target word with its translation."
   (interactive)
+  (setq swap (string= "y" (read-string "Swap?(y/n)")))
   (if (foreign--current-line-is-heading?)
-      (foreign--start-learning (org-get-heading))
+      (foreign--start-learning (org-get-heading) swap)
     (message "You should stay on header which you would like to learn")))
 
 (provide 'foreign)
