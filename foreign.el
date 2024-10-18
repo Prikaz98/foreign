@@ -162,12 +162,17 @@ MAX-LINE need to indent RIGHT-ANSWER"
     (save-excursion
       (switch-to-buffer (plist-get foreign--position :buffer-name))
       (goto-char (plist-get foreign--position :place))
-      (let ((line (foreign--current-line))
-            (new-line))
+      (let* ((start (progn
+                     (beginning-of-line)
+                     (point)))
+             (end (progn
+                     (re-search-forward "[[0-9]+/[0-9]+/[0-9]+]")
+                     (point)))
+             (line (buffer-substring-no-properties start end))
+             (new-line))
         (when (string-match-p "^*+\s+\\w+.+$" line) ;;is org heading like * Org
           (setq new-line (replace-regexp-in-string "\s+\\[[0-9]+/[0-9]+/[0-9]+]" "" line))
-          (beginning-of-line)
-          (kill-line)
+          (kill-region start end)
           (insert (concat new-line
                           " ["
                           (number-to-string all)
