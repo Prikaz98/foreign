@@ -73,13 +73,16 @@ Select only org-list-items"
 (defconst foreign--check-box-checked "[X]")
 
 (defun foreign--content-to-touples (content swap?)
-  "CONTENT of org entity."
+  "CONTENT of org entity.
+
+SWAP - boolean value signs of swapping target word with its translation."
   (thread-last
     (split-string content "\n")
     (-map (lambda (row) (-map 'string-trim (split-string row "-"))))
     (-map (lambda (pair)
-            (when swap?
-              (list (cadr pair) (car pair)))))))
+            (if swap?
+                (list (cadr pair) (car pair))
+              pair)))))
 
 (defun foreign--shuffle (coll)
   "Shuffle COLL."
@@ -130,7 +133,7 @@ Select only org-list-items"
       (if right-answer
           (if (and answer
                    (not (string-empty-p (string-trim answer)))
-                   (foreign--string-contains? (string-trim answer) (string-trim right-answer) t))
+                   (foreign--string-contains? (string-trim right-answer) (string-trim answer) t))
               nil
             right-answer)
         (message (concat "Couldn't find " key))))))
