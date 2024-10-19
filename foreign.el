@@ -176,19 +176,19 @@ MAX-LINE need to indent RIGHT-ANSWER"
                      (- (point) (length foreign-entity-tag) 2)))
              (line (buffer-substring-no-properties start end))
              (new-line))
-        (print line)
         (when (string-match-p "^*+\s+\\w+.+$" line) ;;is org heading like * Org
           (setq new-line (replace-regexp-in-string "\s+\\[[0-9]+/.[0-9]+/.[0-9]+]" "" line))
           (kill-region start end)
           (beginning-of-line)
-          (insert (concat new-line
-                          " ["
-                          (number-to-string all)
-                          "/+"
-                          (number-to-string right)
-                          "/-"
-                          (number-to-string wrong)
-                          "]")))))))
+          (insert (concat
+		   new-line
+                   " ["
+                   (number-to-string all)
+                   "/+"
+                   (number-to-string right)
+                   "/-"
+                   (number-to-string wrong)
+                   "]")))))))
 
 (defun foreign--max-line-size ()
   "Return max line size in the buffer."
