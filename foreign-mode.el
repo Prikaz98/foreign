@@ -43,10 +43,15 @@
 (defvar foreign-mode-syntax-table
   (make-syntax-table))
 
+(defface foreign-empty-checkbox-face
+  `((t (:slant normal :foreground ,(face-attribute font-lock-comment-face :foreground))))
+  "Custom face for checkboxes in my mode.")
+
 (defconst foreign-mode-font-lock-keywords-1
   (list
    '("\\((.+)\\)"  . (1 font-lock-function-name-face))
-   '("\\(\\[.]\\)"  . (1 font-lock-keyword-face)))
+   '("\\(\\[X]\\)"  . (1 font-lock-keyword-face))
+   '("\\(\\[ ]\\)"  . 'foreign-empty-checkbox-face))
   "Minimal highlighting foreign entities.")
 
 (defvar foreign-mode-font-lock-keywords foreign-mode-font-lock-keywords-1
