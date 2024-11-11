@@ -3,7 +3,10 @@
 * Description
 Simple vocabulary trainer app for Emacs.
 * Usage
-Store learning vocabulary in org file. Separate context by org headings. Put tag by ~foreign-put-tag~ function and start learning call ~foreign-start-learning~. When you are finished your translation call ~foreign-check-answers~ to get a result and that it.
+Store learning vocabulary in org file.Separate context by org headings.
+
+Put tag by ~foreign-put-tag~ function and start learning call ~foreign-start-learning~.
+When you are finished your translation call ~foreign-check-answers~ to get a result and that it.
 * Demo
 [[file:foreign-mode-demo.gif]]
 * Check list [3/6]
