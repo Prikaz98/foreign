@@ -10,7 +10,6 @@
 (require 'org)
 (require 'rect)
 
-
 (defgroup foreign nil
   "Options for foreign."
   :group 'foreign)
@@ -45,8 +44,7 @@
   "Does the current line is heading?"
   (save-excursion
     (let ((line (foreign--current-line)))
-      (or
-       (string-match-p (concat "^*+.+" foreign-entity-tag) line)))))
+       (string-match-p (concat "^*+.+" foreign-entity-tag) line))))
 
 (defun foreign--normalize-line (str)
   "Remove extra symbols of the beginning of the line.
@@ -55,9 +53,8 @@ STR - string which will be normalized"
   (let ((remove-from-string
          (lambda (rgx target)
            (replace-regexp-in-string rgx "" target))))
-    (thread-last
-      str
-      (funcall remove-from-string "^\s?+[-+*]\s+"))))
+    (->> str
+         (funcall remove-from-string "^\s?+[-+*]\s+"))))
 
 (defun foreign--copy-all-content ()
   "Select all content under the current heading at point.
@@ -77,13 +74,12 @@ Select only org-list-items"
   "CONTENT of org entity.
 
 SWAP - boolean value signs of swapping target word with its translation."
-  (thread-last
-    (split-string content "\n")
-    (-map (lambda (row) (-map 'string-trim (split-string row "-"))))
-    (-map (lambda (pair)
-            (if swap?
-                (list (cadr pair) (car pair))
-              pair)))))
+  (->> (split-string content "\n")
+       (-map (lambda (row) (-map 'string-trim (split-string row "-"))))
+       (-map (lambda (pair)
+               (if swap?
+                   (list (cadr pair) (car pair))
+                 pair)))))
 
 (defun foreign--shuffle (coll)
   "Shuffle COLL."
@@ -105,25 +101,23 @@ SWAP - boolean value signs of swapping target word with its translation."
     (setq foreign--position (list :place current-point :buffer-name (buffer-name)))
     (setq foreign--answers (foreign--content-to-touples content swap?))
     (switch-to-buffer (concat "foreign-learning *" header "* *" time "*"))
-    (thread-last
-      foreign--answers
-      (-map 'car)
-      (-map (lambda (row) (concat foreign--check-box " " row " - \n")))
-      (foreign--shuffle)
-      (string-join)
-      (insert))
+    (->> foreign--answers
+         (-map 'car)
+         (-map (lambda (row) (concat foreign--check-box " " row " - \n")))
+         (foreign--shuffle)
+         (string-join)
+         (insert))
     (goto-char (point-min))
     (end-of-line)
     (foreign-mode)))
 
 (defun foreign--find-answer-by-key (key)
   "Look for an answer by KEY and return it."
-  (thread-last
-    foreign--answers
-    (-find (lambda (coll)
-             (cl-destructuring-bind (key_ answer) coll
-               (string= key key_))))
-    (-last 'identity)))
+  (->> foreign--answers
+       (-find (lambda (coll)
+                (cl-destructuring-bind (key_ answer) coll
+                  (string= key key_))))
+       (-last 'identity)))
 
 (defun foreign--answer-is-wrong (answer)
   "Check answer on correct by ANSWER."
