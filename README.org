@@ -7,6 +7,16 @@ Store learning vocabulary in org file.Separate context by org headings.
 
 Put tag by ~foreign-put-tag~ function and start learning call ~foreign-start-learning~.
 When you are finished your translation call ~foreign-check-answers~ to get a result and that it.
+* Install
+Clone the repository:
+#+begin_src bash
+git clone https://github.com/Prikaz98/foreign.git
+#+end_src
+Add project in your emacs config file (init.el, .emacs whatever):
+#+begin_src emacs-lisp
+(add-to-list 'load-path "/path/to/project/foreign")
+(require 'foreign)
+#+end_src
 * Demo
 [[file:foreign-mode-demo.gif]]
 * Check list [3/6]
