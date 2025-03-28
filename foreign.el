@@ -4,6 +4,7 @@
 ;;; functions/foreign.el -*- lexical-binding: t; -*-
 ;;; Require: Emacs version >= 29.3
 ;;; Code:
+
 (require 'cc-defs)
 (require 'dash)
 (require 'foreign-mode)
@@ -158,7 +159,7 @@ MAX-LINE need to indent RIGHT-ANSWER"
 
 (defun foreign--put-last-statistics (all right wrong)
   "Store ALL, RIGHT and WRONG result."
-  (when (and foreign--position (string= "y" (read-string "Would you like to leave session?y/n ")))
+  (when (and foreign--position (yes-or-no-p "Would you like to leave session?"))
     (save-excursion
       (switch-to-buffer (plist-get foreign--position :buffer-name))
       (goto-char (plist-get foreign--position :place))
@@ -175,7 +176,7 @@ MAX-LINE need to indent RIGHT-ANSWER"
           (kill-region start end)
           (beginning-of-line)
           (insert (concat
-		   new-line
+           new-line
                    " ["
                    (number-to-string all)
                    "/+"
@@ -227,7 +228,7 @@ When you wrote all translations you can call `'foreign-check-answers`'
 to get a result of training.
 SWAP - boolean value signs of swapping target word with its translation."
   (interactive)
-  (setq swap (string= "y" (read-string "Swap?(y/n)")))
+  (setq swap (yes-or-no-p "Swap?"))
   (if (foreign--current-line-is-heading?)
       (foreign--start-learning (org-get-heading) swap)
     (message "You should stay on header which you would like to learn")))
